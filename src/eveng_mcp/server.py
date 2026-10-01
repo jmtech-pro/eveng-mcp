@@ -34,6 +34,8 @@ WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint
 DESTRUCTIVE = ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True)
 
 STATUS = {0: "stopped", 1: "starting", 2: "running", 3: "stopping"}
+NODE_TYPES = {"iol": "iol", "vpcs": "vpcs", "dynamips": "dynamips",
+              "c1710": "dynamips", "c3725": "dynamips", "c7200": "dynamips"}
 
 
 def client() -> EveClient:
@@ -183,6 +185,11 @@ async def add_node(lab: str, template: str, name: str, image: str | None = None,
     }
     spec.update({"template": template, "name": name, "left": left, "top": top,
                  "count": 1, "postfix": 0})
+    # EVE-NG Pro 7 template responses omit "type"; without it the API rejects
+    # the node with error 20022, so infer it from the template.
+    if not spec.get("type"):
+        spec["type"] = NODE_TYPES.get(template, "docker" if template == "docker"
+                                      or template.startswith("eve-") else "qemu")
     for key, val in (("image", image), ("cpu", cpu), ("ram", ram), ("ethernet", ethernet)):
         if val is not None:
             spec[key] = val

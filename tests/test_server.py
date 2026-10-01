@@ -19,6 +19,7 @@ class FakeEve:
                             "image": "fortinet-FGT-v7.4.4", "status": 2,
                             "url": "telnet://10.0.0.5:32769", "console": "telnet"}}
         self.nets = {}
+        self.template_has_type = True
 
     def ok(self, data=None, code=200):
         return httpx.Response(code, json={"code": code, "status": "success",
@@ -55,6 +56,8 @@ class FakeEve:
                             "list": {"fortinet-FGT-v7.4.4": "x"}}, "ram": {"value": 2048},
                             "ethernet": {"value": 10}}},
         }
+        if not self.template_has_type:
+            routes[("GET", "/api/list/templates/fortinet")]["options"].pop("type")
         if (req.method, path) in routes:
             return self.ok(routes[(req.method, path)])
         if req.method == "POST" and path == lab + "/nodes":
@@ -121,6 +124,12 @@ async def test_add_node_uses_template_defaults(eve):
     spec = eve.last_node_spec
     assert spec["type"] == "qemu" and spec["ram"] == 4096 and spec["ethernet"] == 10
     assert spec["image"] == "fortinet-FGT-v7.4.4"
+
+
+async def test_add_node_infers_type_when_template_omits_it(eve):
+    eve.template_has_type = False  # EVE Pro 7 omits "type" from template options
+    await server.add_node(LAB, "fortinet", "FGT-3")
+    assert eve.last_node_spec["type"] == "qemu"
 
 
 async def test_connect_nodes(eve):
