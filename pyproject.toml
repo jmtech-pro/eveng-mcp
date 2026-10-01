@@ -1,0 +1,23 @@
+[project]
+name = "eveng-mcp"
+version = "0.1.0"
+description = "MCP server for EVE-NG: manage labs, nodes, links and run console commands"
+requires-python = ">=3.10"
+dependencies = ["mcp>=1.10,<2", "httpx>=0.27"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+eveng-mcp = "eveng_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eveng_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
